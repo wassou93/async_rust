@@ -1,10 +1,10 @@
-use futures::executor::block_on;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     println!("Hello sync world!");
-    block_on(do_it());
+    hello().await;
 }
 
-async fn do_it() {
+async fn hello() {
     println!("Hello, async world!");
 }
