@@ -12,7 +12,7 @@ async fn tocker() {
     }
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() {
     let _ = tokio::join!(
         tokio::spawn(ticker()), 
