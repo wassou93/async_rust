@@ -1,19 +1,23 @@
-use rand::Rng;
+fn is_prime(n: u32) -> bool {
+    (2..n/2).all(|i| n % i != 0)
+}
 
-async fn sleep_random() {
-    let mut rng = rand::thread_rng();
-    let secs = rng.gen_range(0..5);
-    tokio::time::sleep(tokio::time::Duration::from_secs(secs)).await; 
+async fn slow_counter() -> usize {
+    tokio::task::spawn_blocking(move || {
+        (2 .. 100_000).filter(|&x| is_prime(x)).count()
+    }).await.unwrap()
+}
+
+async fn ticker() {
+    loop {
+        println!("Still alive!");
+        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+    }
 }
 
 #[tokio::main]
 async fn main() {
-    for i in 0..10 {
-        tokio::select! {
-            _ = sleep_random() => println!("Task 1 Returned"),
-            _ = sleep_random() => println!("Task 2 Returned"),
-            _ = sleep_random() => println!("Task 3 Returned"),
-        }
-        println!("loop {i}\n");
-    }
+    tokio::spawn(ticker());
+    let counted_primes = slow_counter().await;
+    println!("{counted_primes}");
 }
