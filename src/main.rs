@@ -1,22 +1,19 @@
-async fn ticker() {
-    for i in 0..10 {
-        println!("tick {i}");
-        tokio::task::yield_now().await;
-    }
+use rand::Rng;
+
+async fn sleep_random() {
+    let mut rng = rand::thread_rng();
+    let secs = rng.gen_range(0..5);
+    tokio::time::sleep(tokio::time::Duration::from_secs(secs)).await; 
 }
 
-async fn tocker() {
-    for i in 0..10 {
-        println!("tock {i}");
-        tokio::task::yield_now().await;
-    }
-}
-
-#[tokio::main(flavor = "current_thread")]
+#[tokio::main]
 async fn main() {
-    let _ = tokio::join!(
-        tokio::spawn(ticker()), 
-        tokio::spawn(tocker()),
-    );
-    println!("Main Task!");
+    for i in 0..10 {
+        tokio::select! {
+            _ = sleep_random() => println!("Task 1 Returned"),
+            _ = sleep_random() => println!("Task 2 Returned"),
+            _ = sleep_random() => println!("Task 3 Returned"),
+        }
+        println!("loop {i}\n");
+    }
 }
