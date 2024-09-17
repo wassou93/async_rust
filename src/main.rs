@@ -1,33 +1,31 @@
 enum Message {
-    Tick(i32),
+    Tick(u32),
 }
 
-async fn sender1(tx: tokio::sync::mpsc::Sender<Message>) {
+async fn sender(tx: tokio::sync::mpsc::Sender<Message>, n: u32) {
     loop {
-        tx.send(Message::Tick(1)).await.unwrap();
+        tx.send(Message::Tick(n)).await.unwrap();
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
     }
 }
 
-async fn sender2(tx: tokio::sync::mpsc::Sender<Message>) {
+async fn receiver(
+    mut rx1: tokio::sync::mpsc::Receiver<Message>,
+    mut rx2: tokio::sync::mpsc::Receiver<Message>,
+) {
     loop {
-        tx.send(Message::Tick(2)).await.unwrap();
-        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
-    }
-}
-
-async fn receiver(mut rx: tokio::sync::mpsc::Receiver<Message>) {
-    while let Some(message) = rx.recv().await {
-        match message {
-            Message::Tick(id) => println!("Tick({id})"),
+        tokio::select! {
+            Some(Message::Tick(n)) = rx1.recv() => println!("Receieved message {n}"),
+            Some(Message::Tick(n)) = rx2.recv() => println!("Receieved message {n}"),
         }
     }
 }
 
 #[tokio::main]
 async fn main() {
-    let (tx, rx) = tokio::sync::mpsc::channel::<Message>(100);
-    tokio::spawn(sender1(tx.clone()));
-    tokio::spawn(sender2(tx));
-    receiver(rx).await;
+    let (tx1, rx1) = tokio::sync::mpsc::channel::<Message>(100);
+    let (tx2, rx2) = tokio::sync::mpsc::channel::<Message>(100);
+    tokio::spawn(sender(tx1, 1));
+    tokio::spawn(sender(tx2, 2));
+    receiver(rx1, rx2).await;
 }
